@@ -1,14 +1,18 @@
 # Seed dispersion Anodorhynchus #
 library(survival)
 
-guacas <- read.csv("~/Dropbox/Pos-doc/Parrot seed dispersion/Distancias guacas2.csv")
+#guacas <- read.csv("~/Dropbox/Pos-doc/Parrot seed dispersion/Distancias guacas_3.csv")
+guacas <- read.csv("C:/Users/voeroesd/Dropbox/EBD/Parrot seed dispersion/Distancias guacas_3.csv")
+colnames(guacas)[4]<-"Distance"
 str(guacas)
 summary(guacas)
+
 guacas$Ave
 levels(guacas$Ave)
 
 #create Surv object with right-truncation for each species:
 hya<- guacas[which(guacas$Ave=="A.hyacinthinus"),]
+str(hya)
 disp.hya <- Surv(hya$Distance, hya$Min0Exact1)
 disp.hya
 
@@ -59,11 +63,11 @@ summary(sfit2)
 print(sfit2,print.rmean=TRUE)
 print(sfit2,print.rmean=TRUE, rmean="common")
 print(sfit2,print.rmean=TRUE, rmean="individual")
-print(sfit2,print.rmean=TRUE, rmean=133) # using arbitrary limit equal to the 95% quantile of pooled observations
+print(sfit2,print.rmean=TRUE, rmean=quantile(guacas[,4],0.95, na.rm=T)) # using arbitrary limit equal to the 95% quantile of pooled observations
 
 str(lear)
-quantile(hya[,4],0.95)
-quantile(lear[,4],0.95)
+quantile(hya[,4],0.95, na.rm=T)
+quantile(lear[,4],0.95, na.rm=T)
 quantile(guacas[,4],0.95, na.rm=T)
 max(lear[,4])
 max(hya[,4])
@@ -97,7 +101,7 @@ collear[index_lear]
 hya<- guacas[which(guacas$Ave=="A.hyacinthinus"),]
 
 hya$plant_group <-NA
-hya$plant_group[which(hya$Plant=="Attalea phalerata"|hya$Plant=="Acrocomia aculeata"|hya$Plant=="Mauritia flexulosa")] <- "tall"
+hya$plant_group[which(hya$Plant=="Attalea phalerata"|hya$Plant=="Acrocomia totai"|hya$Plant=="Mauritia flexulosa")] <- "tall"
 hya$plant_group[which(hya$Plant=="Attalea eichleri"|hya$Plant=="Attalea barreirensis")] <- "short"
 hya$plant_group<- as.factor(hya$plant_group)
 
@@ -129,10 +133,10 @@ sfit_planttype
 
 
 
-### Testing differences between all plants:
-A.acu <- Surv(hya$Distance[which(hya$Plant=="Acrocomia aculeata")],hya$Min0Exact1[which(hya$Plant=="Acrocomia aculeata")])
-sfit.A.acu <- survfit(formula=A.acu~1)
-print(sfit.A.acu, print.rmean = TRUE, rmean="common")
+### Testing differences between all plants with n>5 for A. hyacinthinus:
+A.tot <- Surv(hya$Distance[which(hya$Plant=="Acrocomia totai")],hya$Min0Exact1[which(hya$Plant=="Acrocomia totai")])
+sfit.A.tot <- survfit(formula=A.tot~1)
+print(sfit.A.tot, print.rmean = TRUE, rmean="common")
 
 A.bar <- Surv(hya$Distance[which(hya$Plant=="Attalea barreirensis")],hya$Min0Exact1[which(hya$Plant=="Attalea barreirensis")])
 sfit.A.bar <- survfit(formula=A.bar~1)
@@ -150,7 +154,27 @@ M.fle <- Surv(hya$Distance[which(hya$Plant=="Mauritia flexulosa")],hya$Min0Exact
 sfit.M.fle <- survfit(formula=M.fle~1)
 print(sfit.M.fle, print.rmean = TRUE, rmean="common")
 
+
+
 (all_plants<- survdiff(formula =disp.hya ~ hya$Plant, rho=1))
+
+
+### Testing differences between all plants with n>5 for A. leari:
+J.mol <- Surv(lear$Distance[which(lear$Plant=="Jatropha mollisima")],lear$Min0Exact1[which(lear$Plant=="Jatropha mollisima")])
+sfit.J.mol <- survfit(formula=J.mol~1)
+print(sfit.J.mol, print.rmean = TRUE, rmean="common")
+
+P.pac <- Surv(lear$Distance[which(lear$Plant=="Pilosocereus pachycladus")],lear$Min0Exact1[which(lear$Plant=="Pilosocereus pachycladus")])
+sfit.P.pac <- survfit(formula=P.pac~1)
+print(sfit.P.pac, print.rmean = TRUE, rmean="common")
+
+S.cor <- Surv(lear$Distance[which(lear$Plant=="Syagrus coronatus")],lear$Min0Exact1[which(lear$Plant=="Syagrus coronatus")])
+sfit.S.cor <- survfit(formula=S.cor~1)
+print(sfit.S.cor, print.rmean = TRUE, rmean="common")
+
+
+
+(all_plants_lear<- survdiff(formula =disp.hya ~ hya$Plant, rho=1))
 
 
 
@@ -167,17 +191,17 @@ par(
 hist(guacas$Distance[which(guacas$Ave=="A.hyacinthinus")],  breaks = seq(0,1620,32.4), xlab="",main="", xlim=c(0,1750),ylim=c(0,600),col="grey",axes=F)
 axis(1,seq(0,1750,250))
 axis(2,seq(0,600,100))
-abline(v= 147,col=c("royalblue"),lwd=1.5)
+abline(v= 156,col=c("royalblue"),lwd=1.5)
 text(1750,600,expression(bold("a")),cex=1.3)
 mtext(expression("Distance (m)"),1,1.8,cex=0.7)
 mtext(expression(italic("A. hyacinthinus")),3,-1.5,cex=0.7)
 
 
-arrows(1603.8,10,1603.8,30,length=0.05,code=1)
-arrows(1506.6,10,1506.6,30,length=0.05,code=1)
-arrows(793.8,10,793.8,30,length=0.05,code=1)
-arrows(599.4,10,599.4,30,length=0.05,code=1)
-arrows(502.2,10,502.2,30,length=0.05,code=1)
+#arrows(1603.8,10,1603.8,30,length=0.05,code=1)
+#arrows(1506.6,10,1506.6,30,length=0.05,code=1)
+#arrows(793.8,10,793.8,30,length=0.05,code=1)
+#arrows(599.4,10,599.4,30,length=0.05,code=1)
+#arrows(502.2,10,502.2,30,length=0.05,code=1)
 
 
 legend(500,400,legend=c("Mean"),lty=c(1),col=c("royalblue"),cex=0.8,bty = "n",xjust=1)
