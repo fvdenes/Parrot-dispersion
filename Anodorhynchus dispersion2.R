@@ -3,6 +3,7 @@ library(survival)
 
 #guacas <- read.csv("~/Dropbox/Pos-doc/Parrot seed dispersion/Distancias guacas_3.csv")
 guacas <- read.csv("C:/Users/voeroesd/Dropbox/EBD/Parrot seed dispersion/Distancias guacas_3.csv")
+colnames(guacas)[3]<-"Plant"
 colnames(guacas)[4]<-"Distance"
 str(guacas)
 summary(guacas)
@@ -11,10 +12,15 @@ guacas$Ave
 levels(guacas$Ave)
 
 #create Surv object with right-truncation for each species:
-hya<- guacas[which(guacas$Ave=="A.hyacinthinus"),]
-str(hya)
-disp.hya <- Surv(hya$Distance, hya$Min0Exact1)
-disp.hya
+hya_primary<- guacas[which(guacas$Ave=="A.hyacinthinus"&guacas$Primary1Secondary2==1),]
+str(hya_primary)
+disp.hya.primary <- Surv(hya_primary$Distance, hya_primary$Min0Exact1)
+disp.hya.primary
+
+hya_secondary<- guacas[which(guacas$Ave=="A.hyacinthinus"&guacas$Primary1Secondary2==2),]
+str(hya_secondary)
+disp.hya.secondary <- Surv(hya_secondary$Distance, hya_secondary$Min0Exact1)
+disp.hya.secondary
 
 lear <- guacas[which(guacas$Ave=="A.leari"),]
 disp.lear <- Surv(lear$Distance, lear$Min0Exact1)
@@ -23,16 +29,27 @@ disp.lear
 disp.both <- Surv(guacas$Distance, guacas$Min0Exact1)
 disp.both
 
-# Generate the Kaplan-Meier estimate of the survival function for A. hyacinthinus:
-sfit.hya <- survfit(formula = disp.hya ~ 1)
-sfit.hya
-str(sfit.hya)
+# Generate the Kaplan-Meier estimate of the survival function for A. hyacinthinus, primary dispersions:
+sfit.hya.primary <- survfit(formula = disp.hya.primary ~ 1)
+sfit.hya.primary
+str(sfit.hya.primary)
 
-summary(sfit.hya)
+summary(sfit.hya.primary)
 
-plot(sfit.hya,main="Kaplan-Meier estimate with 95% confidence bounds", xlab="Distance (m)", ylab="Dispersal function")
+plot(sfit.hya.primary,main="Kaplan-Meier estimate with 95% confidence bounds", xlab="Distance (m)", ylab="Dispersal function")
 
-print(sfit.hya, print.rmean = TRUE, rmean="common")
+print(sfit.hya.primary, print.rmean = TRUE, rmean="common")
+
+# Generate the Kaplan-Meier estimate of the survival function for A. hyacinthinus, secondary dispersions:
+sfit.hya.secondary <- survfit(formula = disp.hya.secondary ~ 1)
+sfit.hya.secondary
+str(sfit.hya.secondary)
+
+summary(sfit.hya.secondary)
+
+plot(sfit.hya.secondary,main="Kaplan-Meier estimate with 95% confidence bounds", xlab="Distance (m)", ylab="Dispersal function")
+
+print(sfit.hya.secondary, print.rmean = TRUE, rmean="common")
 
 # Generate the Kaplan-Meier estimate of the survival function for A. leari:
 sfit.lear <- survfit(formula = disp.lear ~ 1)
@@ -46,6 +63,13 @@ plot(sfit.lear,main="Kaplan-Meier estimate with 95% confidence bounds", xlab="Di
 print(sfit.lear, print.rmean = TRUE, rmean="common")
 
 # Generate the Kaplan-Meier estimate of the survival function for both species:
+# first create a new column identifying lear and 1ary and 2ary hyacinthinus
+guacas$Ave2<-NA
+guacas$Ave2[which(guacas$Ave=="A.leari")]<-"A.leari"
+guacas$Ave2[which(guacas$Ave=="A.hyacinthinus"&guacas$Primary1Secondary2==1)]<-"A.hyacinthinus_primary"
+guacas$Ave2[which(guacas$Ave=="A.hyacinthinus"&guacas$Primary1Secondary2==2)]<-"A.hyacinthinus_secondary"
+
+
 sfit.both <- survfit(formula = disp.both ~ 1)
 sfit.both
 str(sfit.both)
@@ -55,7 +79,7 @@ summary(sfit.both)
 plot(sfit.both,main="Kaplan-Meier estimate with 95% confidence bounds", xlab="Distance (m)", ylab="Dispersal function")
 
 # identifying groups:
-sfit2 <- survfit(formula =disp.both ~ guacas$Ave)
+sfit2 <- survfit(formula =disp.both ~ guacas$Ave2)
 sfit2
 str(sfit2)
 summary(sfit2)
@@ -70,93 +94,75 @@ quantile(hya[,4],0.95, na.rm=T)
 quantile(lear[,4],0.95, na.rm=T)
 quantile(guacas[,4],0.95, na.rm=T)
 max(lear[,4])
-max(hya[,4])
-
-plot(sfit2,main="", xlab="Distance (m)", ylab="Dispersal probability", col=c("royalblue","azure4"), conf.int=T, mark.time=T,lwd=1.5,mark=16)
-legend(1200,0.8,legend=c(expression(italic("A. hyacinthinus")),  expression(italic("A. leari"))),lty=c(1,1), col=c("royalblue","azure4"),lwd=1.5)
-
-## Test differences between two curves (G-rho family of tests, Fleming y Harrington (1982))
-# rho= 0 log-rank test(more weight on higher values of distance)
-# rho= 1 generalized wilcoxon test(more weight on lower values of distance)
-# rho= 1.5 Tarone-Ware test(in between log-rank and wilcoxon)
-svdiff <- survdiff(formula =disp.both ~ guacas$Ave, rho=1)
-svdiff
-
-# Barplots of dispersal distances for each species
-index_hya<- sort(guacas$Distance[which(guacas$Ave=="A.hyacinthinus")],index.return=T)$ix
-colhya <- guacas$Min0Exact1[which(guacas$Ave=="A.hyacinthinus")]
-colhya[index_hya]
-
-index_lear<- sort(guacas$Distance[which(guacas$Ave=="A.leari")],index.return=T)$ix
-collear <- guacas$Min0Exact1[which(guacas$Ave=="A.leari")]
-collear[index_lear]
 
 
-#### Testing differences in type of plant for A. hyacinthinus
-
-#create Surv object with right-truncation for each plant group:
-#tall: Attalea phalerata, Acrocomia and Mauritia
-#short: Attalea barreirensis and Attalea eicleri
-
-hya<- guacas[which(guacas$Ave=="A.hyacinthinus"),]
-
-hya$plant_group <-NA
-hya$plant_group[which(hya$Plant=="Attalea phalerata"|hya$Plant=="Acrocomia totai"|hya$Plant=="Mauritia flexulosa")] <- "tall"
-hya$plant_group[which(hya$Plant=="Attalea eichleri"|hya$Plant=="Attalea barreirensis")] <- "short"
-hya$plant_group<- as.factor(hya$plant_group)
-
-summary(hya)
-
-hya.tall <- hya[which(hya$plant_group=="tall"),]
-disp.tall <-  Surv(hya.tall$Distance, hya.tall$Min0Exact1)
-disp.tall
-sfit.tall <- survfit(formula = disp.tall ~ 1)
-print(sfit.tall, print.rmean = TRUE, rmean="common")
-
-hya.short <- hya[which(hya$plant_group=="short"),]
-disp.short <-  Surv(hya.short$Distance, hya.short$Min0Exact1)
-disp.short
-sfit.short <- survfit(formula = disp.short ~ 1)
-print(sfit.short, print.rmean = TRUE, rmean="common")
+plot(sfit2,main="", xlab="Distance (m)", ylab="Dispersal probability", col=c("royalblue","steelblue1","azure4"), conf.int=T, mark.time=T,lwd=1.5,mark=16)
+legend(1200,0.8,legend=c("Hyacinth macaw - primary","Hyacinth macaw - secondary", "Lear's macaw"),lty=c(1,1), col=c("royalblue","steelblue1","azure4"),lwd=1.5)
 
 ## Test differences between two curves (G-rho family of tests, Fleming y Harrington (1982))
 # rho= 0 log-rank test(more weight on higher values of distance)
 # rho= 1 generalized wilcoxon test(more weight on lower values of distance)
 # rho= 1.5 Tarone-Ware test(in between log-rank and wilcoxon)
-splantdiff <- survdiff(formula =disp.hya ~ hya$plant_group, rho=1)
-splantdiff
 
-# Identifying groups
+# hyancinth (primary) vs. lear
+disp.both2<-disp.both[which(guacas$Ave2=="A.hyacinthinus_primary"|guacas$Ave2=="A.leari")]
+guacas2<-guacas[which(guacas$Ave2=="A.hyacinthinus_primary"|guacas$Ave2=="A.leari"),]
 
-sfit_planttype <- survfit(formula =disp.hya ~ hya$plant_group)
-sfit_planttype
+svdiff1 <- survdiff(formula =disp.both2 ~ guacas2$Ave2, rho=1)
+svdiff1
 
 
 
-### Testing differences between all plants with n>5 for A. hyacinthinus:
-A.tot <- Surv(hya$Distance[which(hya$Plant=="Acrocomia totai")],hya$Min0Exact1[which(hya$Plant=="Acrocomia totai")])
+### Testing differences between all plants with n>5 for A. hyacinthinus, for primary and secondary dispersal:
+table(guacas$Ave2,guacas$Plant)
+
+#A. hyacinthinus primary
+
+A.tot <- Surv(hya_primary$Distance[which(hya_primary$Plant=="Acrocomia totai")],hya_primary$Min0Exact1[which(hya_primary$Plant=="Acrocomia totai")])
 sfit.A.tot <- survfit(formula=A.tot~1)
 print(sfit.A.tot, print.rmean = TRUE, rmean="common")
 
-A.bar <- Surv(hya$Distance[which(hya$Plant=="Attalea barreirensis")],hya$Min0Exact1[which(hya$Plant=="Attalea barreirensis")])
+A.bar <- Surv(hya_primary$Distance[which(hya_primary$Plant=="Attalea barreirensis")],hya_primary$Min0Exact1[which(hya_primary$Plant=="Attalea barreirensis")])
 sfit.A.bar <- survfit(formula=A.bar~1)
 print(sfit.A.bar, print.rmean = TRUE, rmean="common")
 
-A.eic <- Surv(hya$Distance[which(hya$Plant=="Attalea eichleri")],hya$Min0Exact1[which(hya$Plant=="Attalea eichleri")])
+A.eic <- Surv(hya_primary$Distance[which(hya_primary$Plant=="Attalea eichleri")],hya_primary$Min0Exact1[which(hya_primary$Plant=="Attalea eichleri")])
 sfit.A.eic <- survfit(formula=A.eic~1)
 print(sfit.A.eic, print.rmean = TRUE, rmean="common")
 
-A.pha <- Surv(hya$Distance[which(hya$Plant=="Attalea phalerata")],hya$Min0Exact1[which(hya$Plant=="Attalea phalerata")])
+A.pha <- Surv(hya_primary$Distance[which(hya_primary$Plant=="Attalea phalerata")],hya_primary$Min0Exact1[which(hya_primary$Plant=="Attalea phalerata")])
 sfit.A.pha <- survfit(formula=A.pha~1)
 print(sfit.A.pha, print.rmean = TRUE, rmean="common")
 
-M.fle <- Surv(hya$Distance[which(hya$Plant=="Mauritia flexulosa")],hya$Min0Exact1[which(hya$Plant=="Mauritia flexulosa")])
+M.fle <- Surv(hya_primary$Distance[which(hya_primary$Plant=="Mauritia flexulosa")],hya_primary$Min0Exact1[which(hya_primary$Plant=="Mauritia flexulosa")])
 sfit.M.fle <- survfit(formula=M.fle~1)
 print(sfit.M.fle, print.rmean = TRUE, rmean="common")
 
 
 
-(all_plants<- survdiff(formula =disp.hya ~ hya$Plant, rho=1))
+disp.hya.primary2<-disp.hya.primary[which(hya_primary$Plant=="Acrocomia totai"|hya_primary$Plant=="Attalea barreirensis"|hya_primary$Plant=="Attalea eichleri"|hya_primary$Plant=="Attalea phalerata"|hya_primary$Plant=="Mauritia flexulosa")]
+hya_primary2<-hya_primary[which(hya_primary$Plant=="Acrocomia totai"|hya_primary$Plant=="Attalea barreirensis"|hya_primary$Plant=="Attalea eichleri"|hya_primary$Plant=="Attalea phalerata"|hya_primary$Plant=="Mauritia flexulosa"),]
+
+(all_plants_hya_primary<- survdiff(formula =disp.hya.primary2 ~ hya_primary2$Plant, rho=1))
+
+
+#A. hyacinthinus secondary
+A.tot2 <- Surv(hya_secondary$Distance[which(hya_secondary$Plant=="Acrocomia totai")],hya_secondary$Min0Exact1[which(hya_secondary$Plant=="Acrocomia totai")])
+sfit.A.tot2 <- survfit(formula=A.tot2~1)
+print(sfit.A.tot2, print.rmean = TRUE, rmean="common")
+
+
+# test difference in primary vs'secondary A. totai dispersions by hyacinthinus:
+disp.both3<-disp.both[which(guacas$Ave2=="A.hyacinthinus_primary"|guacas$Ave2=="A.hyacinthinus_secondary")]
+guacas3<-guacas[which(guacas$Ave2=="A.hyacinthinus_primary"|guacas$Ave2=="A.hyacinthinus_secondary"),]
+
+disp.both4<-disp.both3[which(guacas3$Plant=="Acrocomia totai")]
+guacas4<-guacas3[which(guacas3$Plant=="Acrocomia totai"),]
+
+svdiff2 <- survdiff(formula =disp.both4 ~ guacas4$Ave2, rho=1)
+svdiff2
+
+
 
 
 ### Testing differences between all plants with n>5 for A. leari:
@@ -174,7 +180,9 @@ print(sfit.S.cor, print.rmean = TRUE, rmean="common")
 
 
 
-(all_plants_lear<- survdiff(formula =disp.hya ~ hya$Plant, rho=1))
+disp.lear2<-disp.lear[which(lear$Plant=="Jatropha mollisima"|lear$Plant=="Pilosocereus pachycladus"|lear$Plant=="Syagrus coronatus")]
+lear2<-lear[which(lear$Plant=="Jatropha mollisima"|lear$Plant=="Pilosocereus pachycladus"|lear$Plant=="Syagrus coronatus"),]
+(all_plants_lear<- survdiff(formula =disp.lear2 ~ lear2$Plant, rho=1))
 
 
 
@@ -182,36 +190,50 @@ print(sfit.S.cor, print.rmean = TRUE, rmean="common")
 ### Macaw species  ####
 jpeg("anodorhynchus_dispersion_hist.jpg", width=8, height=6, units="in",res=300)
 #layout(matrix(c(1,1,2,2,1,1,2,2,3,3,3,3), 3,4, byrow = T))
-layout(matrix(c(1,1,2,2,3,3,3,3), 2,4, byrow = T))
+layout(matrix(c(1,2,3,4,4,4), 2,3, byrow = T))
 par(
   mar=c(2,4,2,1),
   mgp=c(2,0.5,0)
 )
 
-hist(guacas$Distance[which(guacas$Ave=="A.hyacinthinus")],  breaks = seq(0,1620,32.4), xlab="",main="", xlim=c(0,1750),ylim=c(0,600),col="grey",axes=F)
+hist(guacas$Distance[which(guacas$Ave2=="A.hyacinthinus_primary")],  breaks = seq(0,1620,32.4), xlab="",main="", xlim=c(0,1750),ylim=c(0,600),col="grey",axes=F)
 axis(1,seq(0,1750,250))
 axis(2,seq(0,600,100))
-abline(v= 156,col=c("royalblue"),lwd=1.5)
+abline(v= 195.3,col=c("royalblue"),lwd=1.5)
 text(1750,600,expression(bold("a")),cex=1.3)
 mtext(expression("Distance (m)"),1,1.8,cex=0.7)
-mtext(expression(italic("A. hyacinthinus")),3,-1.5,cex=0.7)
+mtext("Hyacinth macaw - primary",3,-1.5,cex=0.7)
 
 
-#arrows(1603.8,10,1603.8,30,length=0.05,code=1)
-#arrows(1506.6,10,1506.6,30,length=0.05,code=1)
-#arrows(793.8,10,793.8,30,length=0.05,code=1)
-#arrows(599.4,10,599.4,30,length=0.05,code=1)
-#arrows(502.2,10,502.2,30,length=0.05,code=1)
+arrows(1603.8,10,1603.8,30,length=0.05,code=1)
+arrows(1506.6,10,1506.6,30,length=0.05,code=1)
+arrows(1020,10,1020,30,length=0.05,code=1)
+arrows(793.8,10,793.8,30,length=0.05,code=1)
+arrows(599.4,10,599.4,30,length=0.05,code=1)
+arrows(502.2,10,502.2,30,length=0.05,code=1)
+arrows(402.2,10,402.2,30,length=0.05,code=1)
+
+legend(800,400,legend=c("Mean"),lty=c(1),col=c("royalblue"),cex=0.8,bty = "n",xjust=1)
+
+hist(guacas$Distance[which(guacas$Ave2=="A.hyacinthinus_secondary")],  breaks = seq(0,1620,32.4), xlab="",main="", xlim=c(0,1750),ylim=c(0,600),col="grey",axes=F)
+axis(1,seq(0,1750,250))
+axis(2,seq(0,600,100))
+abline(v= 55.19,col=c("steelblue1"),lwd=1.5)
+text(1750,600,expression(bold("b")),cex=1.3)
+mtext(expression("Distance (m)"),1,1.8,cex=0.7)
+mtext("Hyacinth macaw - secondary",3,-1.5,cex=0.7)
 
 
-legend(500,400,legend=c("Mean"),lty=c(1),col=c("royalblue"),cex=0.8,bty = "n",xjust=1)
+
+
+legend(800,400,legend=c("Mean"),lty=c(1),col=c("royalblue"),cex=0.8,bty = "n",xjust=1)
 
 
 hist(guacas$Distance[which(guacas$Ave=="A.leari")], breaks = "FD", xlab="",main="", mgp=c(2,0.5,0), col="grey")
 abline(v=874.5,col=c("azure4"),lwd=1.5)
-text(1000,135,expression(bold("b")),cex=1.3)
+text(1000,135,expression(bold("c")),cex=1.3)
 mtext(expression("Distance (m)"),1,1.8,cex=0.7)
-mtext(expression(italic("A. leari")),3,-1.5,cex=0.7)
+mtext("Lear's macaw",3,-1.5,cex=0.7)
 
 legend(800,90,legend=c("Mean"),lty=c(1),col=c("azure4"),cex=0.8,bty = "n",xjust=1)
 
@@ -219,10 +241,10 @@ par(
   mar=c(3.75,4,1.5,2)
 )
 
-plot(sfit2,main="", xlab="Distance (m)", ylab="Dispersal probability", col=c("royalblue","azure4"), conf.int=T, mark.time=T,lwd=1.5,mark=16, mgp=c(2,0.5,0))
-legend(1200,0.8,legend=c(expression(italic("A. hyacinthinus")),  expression(italic("A. leari"))),lty=c(1,1), col=c("royalblue","azure4"),lwd=1.5,bty = "n")
-text(1600,0.80,expression(bold("c")),cex=1.3)
 
+plot(sfit2,main="", xlab="Distance (m)", ylab="Dispersal probability", col=c("royalblue","steelblue1","azure4"), conf.int=T, mark.time=T,lwd=1.5,mark=16)
+legend(1200,0.8,legend=c("Hyacinth macaw - primary","Hyacinth macaw - secondary", "Lear's macaw"),lty=c(1,1), col=c("royalblue","steelblue1","azure4"),lwd=1.5)
+text(1600,0.90,expression(bold("d")),cex=1.3)
 
 dev.off()
 
