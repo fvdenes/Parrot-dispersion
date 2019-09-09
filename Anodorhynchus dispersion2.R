@@ -221,12 +221,12 @@ axis(2,seq(0,600,100))
 abline(v= 55.19,col=c("steelblue1"),lwd=1.5)
 text(1750,600,expression(bold("b")),cex=1.3)
 mtext(expression("Distance (m)"),1,1.8,cex=0.7)
-mtext("Hyacinth macaw - secondary",3,-1.5,cex=0.7)
+mtext("Hyacinth macaw - tertiary",3,-1.5,cex=0.7)
 
 
 
 
-legend(800,400,legend=c("Mean"),lty=c(1),col=c("royalblue"),cex=0.8,bty = "n",xjust=1)
+legend(800,400,legend=c("Mean"),lty=c(1),col=c("steelblue1"),cex=0.8,bty = "n",xjust=1)
 
 
 hist(guacas$Distance[which(guacas$Ave=="A.leari")], breaks = "FD", xlab="",main="", mgp=c(2,0.5,0), col="grey")
@@ -243,7 +243,7 @@ par(
 
 
 plot(sfit2,main="", xlab="Distance (m)", ylab="Dispersal probability", col=c("royalblue","steelblue1","azure4"), conf.int=T, mark.time=T,lwd=1.5,mark=16)
-legend(1200,0.8,legend=c("Hyacinth macaw - primary","Hyacinth macaw - secondary", "Lear's macaw"),lty=c(1,1), col=c("royalblue","steelblue1","azure4"),lwd=1.5)
+legend(1200,0.8,legend=c("Hyacinth macaw - primary","Hyacinth macaw - tertiary", "Lear's macaw"),lty=c(1,1), col=c("royalblue","steelblue1","azure4"),lwd=1.5)
 text(1600,0.90,expression(bold("d")),cex=1.3)
 
 dev.off()

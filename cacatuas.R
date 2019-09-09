@@ -128,7 +128,16 @@ hist(p7$Distance,  breaks = seq(0,120,10), xlab="",main="", xlim=c(0,120),ylim=c
 
 # Mean dispersal distances
 
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+library(grid)
+library(plotrix)
 
+p1b<-p1[complete.cases(p1),]
+p1b$Dispersion<-NA
+p1b$Dispersion[which(p1b$Min0Exact1==1)]<-"Exact"
+p1b$Dispersion[which(p1b$Min0Exact1==0)]<-"Minimum"
 
 #### Plots ####
 jpeg("Cgalerita_Cbanskii.jpg", width=10, height=7, units="in",res=300)
@@ -139,24 +148,44 @@ legend(450,0.8,legend=c(expression(italic("C. galerita")),  expression(italic("C
 
 dev.off()
 
-jpeg("Cgalerita.jpg", width=10, height=7, units="in",res=300)
+jpeg("Cgalerita2.jpg", width=10, height=7, units="in",res=300)
+
 par(
-  mfrow=c(3,2),
+  mfrow =c(2,1),
   mar=c(2,4,2,1),
   mgp=c(2,0.5,0)
 )
 
-plot(sfit1,main="", xlab="Distance (m)", ylab="Dispersal function")
-text(130,0.8,labels=expression(italic("C. galerita - A. bidwillii")))
-hist(p1$Distance,  breaks = seq(0,160,10), xlab="",main="", xlim=c(0,200),ylim=c(0,100),col="grey")
+plot.new()
 
-plot(sfit2,main="", xlab="Distance (m)", ylab="Dispersal function")
-text(280,0.8,labels=expression(italic("C. galerita - A. alexandrae")))
-hist(p2$Distance,  breaks = seq(0,350,10), xlab="",main="", xlim=c(0,300),ylim=c(0,1000),col="grey")
+plot(sfit1,main="", xlab="Distance (m)", ylab="Dispersal function",bty="n")
+text(139,0.8,labels="B")
 
-plot(sfit4,main="", xlab="Distance (m)", ylab="Dispersal function")
-text(200,0.4,labels=expression(italic("C. banksii- Sorghum sp.")), lwd=1.5)
-hist(p4$Distance,  breaks = seq(0,260,10), xlab="",main="", xlim=c(0,260),ylim=c(0,100),col="grey")
+vp <- viewport(height = unit(0.5,"npc"), width=unit(1, "npc"), just = c("centre","top"),  y = 1, x = 0.5)
+print(
+  
+  ggplot(p1b, aes(Distance, fill = Dispersion)) + geom_histogram(position = "dodge", binwidth = 10)+geom_text(x=160, y=50, label="A")+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"))
+  , vp = vp)
+
+
+dev.off()
+
+
+jpeg("Cgalerita.jpg", width=10, height=7, units="in",res=300)
+par(
+  mfrow =c(2,1),
+  mar=c(2,4,2,1),
+  mgp=c(2,0.5,0)
+)
+
+l<-list(p1$Distance[which(p1$Min0Exact1==1)],p1$Distance[which(p1$Min0Exact1==0)])
+multhist(l,col=c("cyan3","coral1"),ylab="Frequency")
+color.legend(19,50,20,60,legend=c("Minimum distance","Exact distance"),rect.col = c("coral1","cyan3"),gradient="y",align="rb")
+corner.label(x=1,y=1,label="A")
+
+plot(sfit1,main="", xlab="Distance (m)", ylab="Dispersal function",bty="n")
+text(155,1, labels= "B")
+
 
 dev.off()
 
